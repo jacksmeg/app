@@ -65,6 +65,7 @@ export const applyViewOverride = (state: AppState): AppState => {
 };
 
 export const allowedViewForRole = (role: User["role"] | null | undefined, requested: AppView): AppView => {
+  if (!role) return requested;
   if (role === "admin") return requested;
   if (role === "seller") return requested === "admin" ? "seller" : requested;
   return requested === "buyer" ? "buyer" : "buyer";

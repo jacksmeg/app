@@ -763,7 +763,24 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
       }));
     },
     refreshLiveData,
-    setView: (view) => setState((current) => ({ ...current, activeView: allowedViewForRole(current.profile?.role ?? "buyer", view) })),
+    setView: (view) => setState((current) => {
+      const allowedView = allowedViewForRole(current.profile?.role, view);
+      if (allowedView !== view) {
+        return {
+          ...current,
+          activeView: allowedView,
+          toast:
+            view === "seller"
+              ? "Seller Hub requires a seller account. Sign in as a seller or create one first."
+              : "Admin Ops requires an admin account. An admin must promote your profile before you can open it.",
+        };
+      }
+
+      return {
+        ...current,
+        activeView: allowedView,
+      };
+    }),
     setSearch: (value) => setState((current) => ({ ...current, searchTerm: value })),
     selectProduct: (productId) => setState((current) => ({ ...current, selectedProductId: productId })),
     selectConversation: (conversationId) => setState((current) => ({ ...current, selectedConversationId: conversationId })),
