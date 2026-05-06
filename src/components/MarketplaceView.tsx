@@ -21,7 +21,7 @@ export const MarketplaceView = () => {
   const [deliveryOption, setDeliveryOption] = useState<DeliveryOption>("JHIMS Rider");
   const [buyerNote, setBuyerNote] = useState("Escrow is enabled by default for high-value orders.");
 
-  const selectedProduct = state.products.find((product) => product.id === state.selectedProductId) ?? state.products[0];
+  const selectedProduct = state.products.find((product) => product.id === state.selectedProductId) ?? state.products[0] ?? null;
   const filteredProducts = state.products.filter((product) => {
     const text = `${product.name} ${product.description} ${product.category}`.toLowerCase();
     const matchesSearch = !deferredSearch || text.includes(deferredSearch.toLowerCase());
@@ -47,7 +47,8 @@ export const MarketplaceView = () => {
   const deliveryFee = deliveryOption === "Pickup" ? 0 : 45;
   const trackedOrder = state.orders[0];
   const featuredProducts = filteredProducts.slice(0, 6);
-  const selectedSeller = state.sellers.find((seller) => seller.id === selectedProduct.sellerId);
+  const selectedSeller = selectedProduct ? state.sellers.find((seller) => seller.id === selectedProduct.sellerId) : undefined;
+  const hasProducts = featuredProducts.length > 0;
   const categoryCards = CATEGORY_OPTIONS.filter((category) => category !== "All").map((category) => ({
     name: category,
     count: state.products.filter((product) => product.category === category).length,
@@ -155,7 +156,7 @@ export const MarketplaceView = () => {
                   const isFavorite = state.favorites.includes(product.id);
                   const currentPrice = product.discountPrice ?? product.price;
                   return (
-                    <article key={product.id} className={`product-card market-product-card ${product.id === selectedProduct.id ? "selected" : ""}`}>
+                    <article key={product.id} className={`product-card market-product-card ${product.id === selectedProduct?.id ? "selected" : ""}`}>
                       <button className="product-hitbox" onClick={() => actions.selectProduct(product.id)} aria-label={`Open ${product.name}`} />
                       <ProductArt product={product} />
                       <div className="product-copy">
@@ -184,6 +185,7 @@ export const MarketplaceView = () => {
                     </article>
                   );
                 })}
+                {!hasProducts ? <p className="empty-text">No live products yet. Add your first seller listing to populate the marketplace.</p> : null}
               </div>
             </SectionCard>
 
@@ -208,10 +210,10 @@ export const MarketplaceView = () => {
                 ) : <p className="empty-text">Place an order to start seeing live tracking updates here.</p>}
               </SectionCard>
 
-              <SectionCard title="Saved for later" eyebrow="Favourites">
-                <div className="saved-stack">
-                  {favouriteProducts.map((product) => (
-                    <button key={product.id} className="saved-item" onClick={() => actions.selectProduct(product.id)}>
+            <SectionCard title="Saved for later" eyebrow="Favourites">
+              <div className="saved-stack">
+                {favouriteProducts.map((product) => (
+                  <button key={product.id} className="saved-item" onClick={() => actions.selectProduct(product.id)}>
                       <div className="saved-swatch" style={{ background: `linear-gradient(135deg, ${product.palette[0]}, ${product.palette[1]})` }} />
                       <div>
                         <strong>{product.name}</strong>
@@ -220,6 +222,7 @@ export const MarketplaceView = () => {
                       <span>{formatMoney(product.discountPrice ?? product.price)}</span>
                     </button>
                   ))}
+                  {!favouriteProducts.length ? <p className="empty-text">Saved items will appear here after buyers bookmark products.</p> : null}
                 </div>
               </SectionCard>
             </div>
@@ -236,28 +239,34 @@ export const MarketplaceView = () => {
             </div>
 
             <SectionCard title="Product details" eyebrow="Selected product">
-              <ProductArt product={selectedProduct} />
-              <div className="detail-copy">
-                <h3>{selectedProduct.name}</h3>
-                <p>{selectedProduct.description}</p>
-                <div className="pill-row">
-                  <TonePill label={selectedProduct.location} tone="neutral" />
-                  <TonePill label={selectedProduct.condition} tone="warning" />
-                  <TonePill label={selectedProduct.escrowEligible ? "Escrow protected" : "Direct payment"} tone={selectedProduct.escrowEligible ? "accent" : "neutral"} />
-                </div>
-                <div className="price-stack">
-                  <strong>{formatMoney(selectedProduct.discountPrice ?? selectedProduct.price)}</strong>
-                  {selectedProduct.discountPrice ? <span>{formatMoney(selectedProduct.price)}</span> : null}
-                </div>
-                <div className="seller-mini-profile">
-                  <strong>{selectedSeller?.shopName ?? "Verified seller"}</strong>
-                  <small>{selectedSeller?.rating ?? "4.7"} rating · replies in {selectedSeller?.responseTime ?? "15 mins"}</small>
-                </div>
-                <div className="card-actions">
-                  <button className="button-primary" onClick={() => { actions.addToCart(selectedProduct.id); setBuyerNote(`Added ${selectedProduct.name} to cart.`); }}>Add now</button>
-                  <button className="button-secondary" onClick={() => setBuyerNote(`Chat queue opened with ${selectedSeller?.shopName ?? "seller"} and expected reply in ${selectedSeller?.responseTime ?? "15 mins"}.`)}>Chat seller</button>
-                </div>
-              </div>
+              {selectedProduct ? (
+                <>
+                  <ProductArt product={selectedProduct} />
+                  <div className="detail-copy">
+                    <h3>{selectedProduct.name}</h3>
+                    <p>{selectedProduct.description}</p>
+                    <div className="pill-row">
+                      <TonePill label={selectedProduct.location} tone="neutral" />
+                      <TonePill label={selectedProduct.condition} tone="warning" />
+                      <TonePill label={selectedProduct.escrowEligible ? "Escrow protected" : "Direct payment"} tone={selectedProduct.escrowEligible ? "accent" : "neutral"} />
+                    </div>
+                    <div className="price-stack">
+                      <strong>{formatMoney(selectedProduct.discountPrice ?? selectedProduct.price)}</strong>
+                      {selectedProduct.discountPrice ? <span>{formatMoney(selectedProduct.price)}</span> : null}
+                    </div>
+                    <div className="seller-mini-profile">
+                      <strong>{selectedSeller?.shopName ?? "Verified seller"}</strong>
+                      <small>{selectedSeller?.rating ?? "4.7"} rating · replies in {selectedSeller?.responseTime ?? "15 mins"}</small>
+                    </div>
+                    <div className="card-actions">
+                      <button className="button-primary" onClick={() => { actions.addToCart(selectedProduct.id); setBuyerNote(`Added ${selectedProduct.name} to cart.`); }}>Add now</button>
+                      <button className="button-secondary" onClick={() => setBuyerNote(`Chat queue opened with ${selectedSeller?.shopName ?? "seller"} and expected reply in ${selectedSeller?.responseTime ?? "15 mins"}.`)}>Chat seller</button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="empty-text">No product is selected yet because the live catalog is currently empty.</p>
+              )}
             </SectionCard>
 
             <SectionCard title="Cart" eyebrow="Checkout">
