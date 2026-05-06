@@ -60,7 +60,7 @@ Then update Google OAuth in Google Cloud:
 - Authorized redirect URI:
   - `https://usyaplolibrpkvoyogvs.supabase.co/auth/v1/callback`
 
-The project includes [public/_redirects](</C:/Users/El/Desktop/MARKETPLACE APP/public/_redirects>) so direct loads and refreshes keep serving the app entry point on Cloudflare Pages.
+Cloudflare Pages already provides default single-page application routing when there is no top-level `404.html`, so no custom `_redirects` file is needed for this React app.
 
 ## Enable the real backend
 
