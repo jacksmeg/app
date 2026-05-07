@@ -3,3 +3,9 @@ dist
 *.tsbuildinfo
 .env
 jhims-*.png
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
