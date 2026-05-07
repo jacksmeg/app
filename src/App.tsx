@@ -2,6 +2,7 @@ import { startTransition, useEffect } from "react";
 import { AdminView } from "./components/AdminView";
 import { AuthScreen } from "./components/AuthScreen";
 import { MarketplaceView } from "./components/MarketplaceView";
+import { ProfilePanel } from "./components/ProfilePanel";
 import { SellerView } from "./components/SellerView";
 import { formatCompactMoney } from "./lib/format";
 import { useJhims } from "./state/JhimsStore";
@@ -50,6 +51,12 @@ function App() {
   const activeMeta = viewMeta[state.activeView];
   const isBuyer = state.activeView === "buyer";
   const isAuthenticatedLive = !state.backendConfigured || Boolean(state.sessionUser);
+  const profileInitials = state.profile?.name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 
   if (state.backendConfigured && !isAuthenticatedLive) {
     return <AuthScreen />;
@@ -80,6 +87,15 @@ function App() {
               <span>{activeMeta.statLabel}</span>
               <strong>{activeMeta.statValue(gmv, openOrders, state.products.length)}</strong>
             </div>
+          ) : null}
+          {state.profile ? (
+            <button className="profile-trigger" onClick={() => actions.openProfile()}>
+              <span className="profile-trigger-avatar">{profileInitials || "J"}</span>
+              <span className="profile-trigger-copy">
+                <strong>{state.profile.name}</strong>
+                <small>{state.profile.role === "seller" ? "Seller profile" : state.profile.role === "admin" ? "Admin profile" : "Buyer profile"}</small>
+              </span>
+            </button>
           ) : null}
           {state.backendConfigured ? (
             <button className="top-link" onClick={() => void actions.signOut()}>
@@ -129,6 +145,7 @@ function App() {
       {state.activeView === "admin" ? <AdminView /> : null}
 
       {state.toast ? <div className="toast">{state.toast}</div> : null}
+      <ProfilePanel />
     </div>
   );
 }

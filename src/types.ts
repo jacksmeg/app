@@ -243,12 +243,22 @@ export interface SignUpInput {
   shopName: string;
 }
 
+export interface ProfileUpdateInput {
+  fullName: string;
+  phone: string;
+  location: string;
+  shopName: string;
+}
+
 export interface AppState {
   backendConfigured: boolean;
   mode: "demo" | "live";
   loading: boolean;
   authLoading: boolean;
   authError: string | null;
+  isProfileOpen: boolean;
+  profileSaving: boolean;
+  passwordSaving: boolean;
   activeView: AppView;
   searchTerm: string;
   selectedProductId: string;

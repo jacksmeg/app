@@ -17,14 +17,14 @@ export const AuthScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signUp, setSignUp] = useState<SignUpInput>(initialSignUp);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
 
   return (
     <div className="auth-shell">
       <div className="auth-card">
         <div className="auth-brand">
           <span className="brand-wordmark">JHIMS</span>
-          <p>Secure marketplace access for buyers, sellers, and admins.</p>
+          <p>Create your buyer or seller account, then manage your profile, security, and orders from one place.</p>
         </div>
 
         <div className="workspace-switch auth-switch">
@@ -47,14 +47,14 @@ export const AuthScreen = () => {
             </span>
             <span>
               {mode === "signup"
-                ? `Continue with Google as a ${signUp.role}`
+                ? `Create ${signUp.role} account with Google`
                 : "Continue with Google"}
             </span>
           </button>
           <p className="auth-helper">
             {mode === "signup"
-              ? "Google signup uses your selected role and finishes the account after Google returns you to JHIMS."
-              : "Use Google for a faster sign-in if your account was created with Google."}
+              ? "Choose buyer or seller first. After Google returns, JHIMS will create the account and open your profile."
+              : "Use Google for a faster sign-in if your account was created with Google or if you already linked it."}
           </p>
           <div className="auth-divider">
             <span>or continue with email</span>

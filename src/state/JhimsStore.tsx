@@ -41,6 +41,7 @@ import type {
   Filters,
   OrderStatus,
   PaymentMethod,
+  ProfileUpdateInput,
   ProductDraft,
   SignInInput,
   SignUpInput,
@@ -48,6 +49,7 @@ import type {
 
 const DEMO_STORAGE_KEY = "jhims-marketplace-demo-state";
 const OAUTH_INTENT_KEY = "jhims-marketplace-oauth-intent";
+const PROFILE_OPEN_KEY = "jhims-marketplace-open-profile";
 const ORDER_FLOW: OrderStatus[] = [
   "Pending",
   "Accepted",
@@ -77,6 +79,11 @@ interface JhimsStoreValue {
     signInWithGoogle: (intent?: SignUpInput | null) => Promise<void>;
     signOut: () => Promise<void>;
     refreshLiveData: () => Promise<void>;
+    openProfile: () => void;
+    closeProfile: () => void;
+    updateProfile: (input: ProfileUpdateInput) => Promise<boolean>;
+    updatePassword: (nextPassword: string) => Promise<boolean>;
+    sendPasswordReset: () => Promise<boolean>;
     setView: (view: AppView) => void;
     setSearch: (value: string) => void;
     selectProduct: (productId: string) => void;
@@ -141,20 +148,49 @@ const writeOAuthIntent = (intent: OAuthIntent | null) => {
   window.localStorage.setItem(OAUTH_INTENT_KEY, JSON.stringify(intent));
 };
 
-const readDemoState = (): AppState => {
+const writeProfileOpenIntent = (shouldOpen: boolean) => {
   if (typeof window === "undefined") {
-    return createInitialState();
+    return;
+  }
+
+  if (!shouldOpen) {
+    window.localStorage.removeItem(PROFILE_OPEN_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(PROFILE_OPEN_KEY, "1");
+};
+
+const consumeProfileOpenIntent = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const shouldOpen = window.localStorage.getItem(PROFILE_OPEN_KEY) === "1";
+  if (shouldOpen) {
+    window.localStorage.removeItem(PROFILE_OPEN_KEY);
+  }
+  return shouldOpen;
+};
+
+const readDemoState = (): AppState => {
+  const initialState = createInitialState();
+  if (typeof window === "undefined") {
+    return initialState;
   }
 
   const saved = window.localStorage.getItem(DEMO_STORAGE_KEY);
   if (!saved) {
-    return applyViewOverride(createInitialState());
+    return applyViewOverride(initialState);
   }
 
   try {
-    return applyViewOverride(JSON.parse(saved) as AppState);
+    return applyViewOverride({
+      ...initialState,
+      ...(JSON.parse(saved) as AppState),
+    });
   } catch {
-    return applyViewOverride(createInitialState());
+    return applyViewOverride(initialState);
   }
 };
 
@@ -314,6 +350,9 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
         deliveryEvents: [],
         cart: [],
         activeView: "buyer",
+        isProfileOpen: false,
+        profileSaving: false,
+        passwordSaving: false,
       }));
       return;
     }
@@ -464,6 +503,7 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
     const messages = (messagesResult.data ?? []).map(normalizeMessage);
     const notifications = (notificationsResult.data ?? []).map(normalizeNotification);
     const cart = buildCart(cartResult.data?.cart_items ?? []);
+    const shouldOpenProfile = consumeProfileOpenIntent();
 
     setState((current) =>
       applyViewOverride({
@@ -489,7 +529,7 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
         deliveryEvents,
         cart,
         filters: current.filters ?? defaultFilters,
-        activeView: allowedViewForRole(profile.role, current.activeView),
+        activeView: allowedViewForRole(profile.role, shouldOpenProfile ? role : current.activeView),
         currentBuyerId: profile.role === "buyer" ? profile.id : current.currentBuyerId,
         currentSellerId:
           profile.role === "seller" ? profile.id : current.currentSellerId || sellers[0]?.id || "",
@@ -505,6 +545,10 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
             : conversations[0]?.id ?? "",
         productDraft: current.productDraft?.id ? current.productDraft : createBlankProductDraft(),
         checkoutLoading: false,
+        isProfileOpen: shouldOpenProfile || current.isProfileOpen,
+        profileSaving: false,
+        passwordSaving: false,
+        toast: shouldOpenProfile ? "Account ready. Review your profile and security settings." : current.toast,
       }),
     );
   }, [finalizeOAuthProfile]);
@@ -652,9 +696,18 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
   }, [ensureLiveCartId, refreshLiveData, state.profile?.location, state.sessionUser]);
 
   const actions = useMemo<JhimsStoreValue["actions"]>(() => ({
+    openProfile: () => setState((current) => ({
+      ...current,
+      isProfileOpen: true,
+    })),
+    closeProfile: () => setState((current) => ({
+      ...current,
+      isProfileOpen: false,
+    })),
     signIn: async (input) => {
       if (!supabase) return;
       writeOAuthIntent(null);
+      writeProfileOpenIntent(false);
       setState((current) => ({ ...current, authLoading: true, authError: null }));
       const { error } = await supabase.auth.signInWithPassword({
         email: input.email,
@@ -669,7 +722,13 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
     signUp: async (input) => {
       if (!supabase) return;
       writeOAuthIntent(null);
-      setState((current) => ({ ...current, authLoading: true, authError: null }));
+      writeProfileOpenIntent(true);
+      setState((current) => ({
+        ...current,
+        authLoading: true,
+        authError: null,
+        activeView: input.role,
+      }));
       const { error } = await supabase.auth.signUp({
         email: input.email,
         password: input.password,
@@ -684,6 +743,7 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
         },
       });
       if (error) {
+        writeProfileOpenIntent(false);
         setState((current) => ({ ...current, authLoading: false, authError: error.message }));
         return;
       }
@@ -699,6 +759,7 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
       if (!supabase) return;
 
       setState((current) => ({ ...current, authLoading: true, authError: null }));
+      writeProfileOpenIntent(Boolean(intent));
       writeOAuthIntent(
         intent
           ? {
@@ -735,12 +796,14 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
 
       if (error) {
         writeOAuthIntent(null);
+        writeProfileOpenIntent(false);
         setState((current) => ({ ...current, authLoading: false, authError: error.message }));
       }
     },
     signOut: async () => {
       if (!supabase) return;
       writeOAuthIntent(null);
+      writeProfileOpenIntent(false);
       await supabase.auth.signOut();
       setState((current) => ({
         ...current,
@@ -759,8 +822,217 @@ export const JhimsStoreProvider = ({ children }: PropsWithChildren) => {
         notifications: [],
         deliveryEvents: [],
         cart: [],
+        isProfileOpen: false,
+        profileSaving: false,
+        passwordSaving: false,
         toast: "Signed out.",
       }));
+    },
+    updateProfile: async (input) => {
+      const fullName = input.fullName.trim();
+      const phone = input.phone.trim();
+      const location = input.location.trim();
+      const shopName = input.shopName.trim();
+
+      if (!fullName) {
+        setState((current) => ({ ...current, toast: "Full name is required." }));
+        return false;
+      }
+
+      if (!location) {
+        setState((current) => ({ ...current, toast: "Location is required." }));
+        return false;
+      }
+
+      if (!supabase || state.mode === "demo") {
+        updateDemoState((current) => {
+          if (!current.profile) {
+            return current;
+          }
+
+          const nextProfile = {
+            ...current.profile,
+            name: fullName,
+            phone,
+            location,
+          };
+          const nextShopName =
+            current.profile.role === "seller"
+              ? shopName || `${fullName} Shop`
+              : "";
+
+          return {
+            ...current,
+            profile: nextProfile,
+            users: current.users.map((user) => (user.id === nextProfile.id ? nextProfile : user)),
+            sellers: current.sellers.map((seller) =>
+              seller.id === nextProfile.id
+                ? {
+                    ...seller,
+                    name: fullName,
+                    shopName: nextShopName || seller.shopName,
+                    location,
+                  }
+                : seller,
+            ),
+            profileSaving: false,
+            toast: "Profile updated.",
+          };
+        });
+        return true;
+      }
+
+      if (!state.profile) {
+        return false;
+      }
+
+      setState((current) => ({ ...current, profileSaving: true }));
+
+      const profileUpdate = await supabase
+        .from("profiles")
+        .update({
+          full_name: fullName,
+          phone,
+          location,
+        })
+        .eq("id", state.profile.id);
+
+      if (profileUpdate.error) {
+        setState((current) => ({
+          ...current,
+          profileSaving: false,
+          toast: profileUpdate.error.message,
+        }));
+        return false;
+      }
+
+      if (state.profile.role === "seller") {
+        const sellerUpdate = await supabase.from("seller_profiles").upsert(
+          {
+            id: state.profile.id,
+            shop_name: shopName || `${fullName} Shop`,
+          },
+          { onConflict: "id" },
+        );
+
+        if (sellerUpdate.error) {
+          setState((current) => ({
+            ...current,
+            profileSaving: false,
+            toast: sellerUpdate.error.message,
+          }));
+          return false;
+        }
+      }
+
+      const authUpdate = await supabase.auth.updateUser({
+        data: {
+          full_name: fullName,
+          phone,
+          location,
+          shop_name: state.profile.role === "seller" ? shopName || `${fullName} Shop` : undefined,
+        },
+      });
+
+      if (authUpdate.error) {
+        setState((current) => ({
+          ...current,
+          profileSaving: false,
+          toast: authUpdate.error.message,
+        }));
+        return false;
+      }
+
+      await refreshLiveData();
+      setState((current) => ({
+        ...current,
+        isProfileOpen: true,
+        profileSaving: false,
+        toast: "Profile updated.",
+      }));
+      return true;
+    },
+    updatePassword: async (nextPassword) => {
+      const password = nextPassword.trim();
+      if (password.length < 8) {
+        setState((current) => ({
+          ...current,
+          toast: "Use at least 8 characters for your password.",
+        }));
+        return false;
+      }
+
+      if (!supabase || state.mode === "demo") {
+        updateDemoState((current) => ({
+          ...current,
+          passwordSaving: false,
+          toast: "Password updated in demo mode.",
+        }));
+        return true;
+      }
+
+      setState((current) => ({ ...current, passwordSaving: true }));
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
+
+      if (error) {
+        setState((current) => ({
+          ...current,
+          passwordSaving: false,
+          toast: error.message,
+        }));
+        return false;
+      }
+
+      setState((current) => ({
+        ...current,
+        passwordSaving: false,
+        toast: "Password updated successfully.",
+      }));
+      return true;
+    },
+    sendPasswordReset: async () => {
+      if (!state.profile?.email) {
+        setState((current) => ({
+          ...current,
+          toast: "No email address is available for this account yet.",
+        }));
+        return false;
+      }
+
+      if (!supabase || state.mode === "demo") {
+        setState((current) => ({
+          ...current,
+          toast: `Password reset link sent to ${state.profile?.email} in demo mode.`,
+        }));
+        return true;
+      }
+
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}${window.location.pathname}${window.location.search}`
+          : env.siteUrl;
+
+      writeProfileOpenIntent(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(state.profile.email, {
+        redirectTo,
+      });
+
+      if (error) {
+        writeProfileOpenIntent(false);
+        setState((current) => ({
+          ...current,
+          toast: error.message,
+        }));
+        return false;
+      }
+
+      setState((current) => ({
+        ...current,
+        toast: `Reset link sent to ${state.profile?.email}. Open the email and come back to JHIMS to set a new password.`,
+      }));
+      return true;
     },
     refreshLiveData,
     setView: (view) => setState((current) => {
