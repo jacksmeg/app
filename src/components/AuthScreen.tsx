@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { JhimsLogo } from "./JhimsLogo";
 import { useJhims } from "../state/JhimsStore";
 import type { SignUpInput } from "../types";
 
@@ -23,7 +24,7 @@ export const AuthScreen = () => {
     <div className="auth-shell">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="brand-wordmark">JHIMS</span>
+          <JhimsLogo size="auth" />
           <p>Create your buyer or seller account, then manage your profile, security, and orders from one place.</p>
         </div>
 

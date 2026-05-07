@@ -76,18 +76,63 @@ button { cursor: pointer; }
 }
 
 .brand-block, .topbar-tools, .hero-actions, .card-actions, .pill-row, .field-group, .product-meta, .order-foot, .inventory-stats, .cart-line-controls, .inventory-meta, .payout-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.brand-wordmark {
-  font-family: "Outfit", "Plus Jakarta Sans", sans-serif;
-  background: linear-gradient(135deg, var(--green-dark), var(--green), var(--teal));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-size: 1.76rem;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  line-height: 1;
+.jhims-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
-.brand-tag { color: var(--muted); font-size: 0.82rem; font-weight: 600; }
+.jhims-logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  box-shadow: 0 12px 26px rgba(16, 115, 87, 0.12);
+}
+.jhims-logo-mark svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.jhims-logo-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.jhims-logo-title {
+  font-family: "Outfit", "Plus Jakarta Sans", sans-serif;
+  color: #12352b;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+.jhims-logo-subtitle {
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.jhims-logo-header .jhims-logo-mark {
+  width: 46px;
+  height: 46px;
+}
+.jhims-logo-header .jhims-logo-title {
+  font-size: 1.5rem;
+}
+.jhims-logo-header .jhims-logo-subtitle {
+  font-size: 0.64rem;
+}
+.jhims-logo-auth .jhims-logo-mark {
+  width: 60px;
+  height: 60px;
+}
+.jhims-logo-auth .jhims-logo-title {
+  font-size: 2rem;
+}
+.jhims-logo-auth .jhims-logo-subtitle {
+  font-size: 0.72rem;
+}
 
 .workspace-switch {
   display: inline-flex;
@@ -280,6 +325,10 @@ button { cursor: pointer; }
   border: 1px solid rgba(219, 229, 238, 0.94);
   border-radius: 22px;
   box-shadow: var(--shadow);
+}
+.auth-brand {
+  display: grid;
+  gap: 12px;
 }
 .auth-brand p, .auth-error { margin: 0; color: var(--muted); }
 .auth-switch { justify-self: start; }
@@ -852,4 +901,6 @@ button:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important
   .section-card, .category-sidebar, .marketplace-hero { padding: 16px; }
   .profile-panel { padding: 18px; }
   .profile-trigger { width: 100%; justify-content: flex-start; }
+  .jhims-logo-header .jhims-logo-title { font-size: 1.32rem; }
+  .jhims-logo-header .jhims-logo-mark { width: 42px; height: 42px; }
 }

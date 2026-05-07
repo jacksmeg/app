@@ -1,6 +1,7 @@
 import { startTransition, useEffect } from "react";
 import { AdminView } from "./components/AdminView";
 import { AuthScreen } from "./components/AuthScreen";
+import { JhimsLogo } from "./components/JhimsLogo";
 import { MarketplaceView } from "./components/MarketplaceView";
 import { ProfilePanel } from "./components/ProfilePanel";
 import { SellerView } from "./components/SellerView";
@@ -67,8 +68,7 @@ function App() {
       <div className="app-backdrop" />
       <header className="topbar">
         <div className="brand-block">
-          <span className="brand-wordmark">JHIMS</span>
-          <span className="brand-tag">Ghana marketplace</span>
+          <JhimsLogo size="header" />
         </div>
         <nav className="workspace-switch" aria-label="Workspace switcher">
           {(["buyer", "seller", "admin"] as AppView[]).map((view) => (
