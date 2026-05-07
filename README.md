@@ -5,9 +5,9 @@ JHIMS is a React + Vite marketplace app with buyer, seller, and admin workspaces
 ## What ships now
 
 - Buyer marketplace UI with cart, checkout entry points, order tracking, chat, and notifications
-- Seller workspace with order handling, payout requests, and product create/edit form with image upload support
+- Seller workspace with order handling, payout requests, product create/edit form with image upload support, and real seller onboarding
 - Admin workspace with user moderation, seller verification, complaints, escrow visibility, and delivery monitoring
-- Supabase database schema, RLS policies, storage bucket policies, realtime tables, and auth profile bootstrap trigger
+- Supabase database schema, RLS policies, storage bucket policies, realtime tables, auth profile bootstrap trigger, profile photo upload, KYC document storage, and password recovery handling
 - Stripe checkout function and webhook handler for live hosted checkout flows
 - Demo mode fallback when Supabase env vars are not configured
 
@@ -76,6 +76,7 @@ VITE_SITE_URL=http://localhost:5173
 3. Apply the database migration:
 
 - [supabase/migrations/20260506_init_jhims_marketplace.sql](</C:/Users/El/Desktop/MARKETPLACE APP/supabase/migrations/20260506_init_jhims_marketplace.sql>)
+- [supabase/migrations/20260507_profiles_onboarding_and_recovery.sql](</C:/Users/El/Desktop/MARKETPLACE APP/supabase/migrations/20260507_profiles_onboarding_and_recovery.sql>)
 
 4. Deploy the Edge Functions:
 
@@ -105,6 +106,9 @@ checkout.session.async_payment_failed
 
 - Buyer and seller accounts can sign up from the UI.
 - Google sign-in/sign-up is supported from the auth screen once the Google provider is enabled in Supabase Auth.
+- Buyers can upgrade themselves into sellers from the in-app profile center with shop details and KYC upload.
+- Buyers and sellers can upload profile photos from the in-app profile center.
+- The auth screen now supports `Forgot password` request flow and `Reset password` completion flow.
 - Admin accounts should be promoted manually in `public.profiles.role`.
 - New users automatically get a `profiles` row and a `carts` row.
 - New seller signups also get a `seller_profiles` row.

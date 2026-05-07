@@ -1,5 +1,6 @@
 export type Role = "buyer" | "seller" | "admin";
 export type AppView = Role;
+export type SellerVerificationStatus = "Not Started" | "Pending" | "Approved" | "Needs Action";
 
 export type ProductCategory =
   | "Electronics"
@@ -54,14 +55,17 @@ export interface User {
   verified: boolean;
   banned: boolean;
   avatarUrl?: string;
+  avatarPath?: string;
 }
 
 export interface Seller {
   id: string;
   name: string;
   shopName: string;
+  bio?: string;
   location: string;
   verified: boolean;
+  verificationStatus?: SellerVerificationStatus;
   rating: number;
   reviews: number;
   balance: number;
@@ -72,6 +76,12 @@ export interface Seller {
   pendingWithdrawal: number;
   payoutEnabled?: boolean;
   stripeConnected?: boolean;
+  onboardingCompleted?: boolean;
+  onboardingSubmittedAt?: string;
+  payoutPhone?: string;
+  idDocumentType?: string;
+  idDocumentNumber?: string;
+  idDocumentPath?: string;
 }
 
 export interface Product {
@@ -248,6 +258,16 @@ export interface ProfileUpdateInput {
   phone: string;
   location: string;
   shopName: string;
+  bio?: string;
+  payoutPhone?: string;
+}
+
+export interface SellerOnboardingInput {
+  shopName: string;
+  bio: string;
+  payoutPhone: string;
+  idDocumentType: string;
+  idDocumentNumber: string;
 }
 
 export interface AppState {
@@ -258,7 +278,10 @@ export interface AppState {
   authError: string | null;
   isProfileOpen: boolean;
   profileSaving: boolean;
+  profileUploading: boolean;
   passwordSaving: boolean;
+  sellerOnboardingSaving: boolean;
+  pendingPasswordRecovery: boolean;
   activeView: AppView;
   searchTerm: string;
   selectedProductId: string;

@@ -32,9 +32,19 @@ export const SellerView = () => {
             <p className="eyebrow">Seller center</p>
             <h1>{seller.shopName} runs inventory, orders, chats, and withdrawals from one desk.</h1>
             <p className="hero-text">
-              Track every listing, move orders through delivery, keep buyer response time low, and
-              request payouts as soon as orders settle.
+              {seller.bio?.trim()
+                ? seller.bio
+                : "Track every listing, move orders through delivery, keep buyer response time low, and request payouts as soon as orders settle."}
             </p>
+            <div className="pill-row">
+              <TonePill
+                label={seller.verified ? "Verified badge active" : `KYC ${seller.verificationStatus ?? "Pending"}`}
+                tone={seller.verified ? "success" : seller.verificationStatus === "Pending" ? "accent" : "warning"}
+              />
+              {seller.onboardingSubmittedAt ? (
+                <TonePill label={`Submitted ${seller.onboardingSubmittedAt}`} tone="neutral" />
+              ) : null}
+            </div>
             <div className="hero-actions">
               <button
                 className="button-primary"
@@ -78,6 +88,15 @@ export const SellerView = () => {
         <div className="split-grid">
           <SectionCard title="Inventory" eyebrow="Listings" action={`${inventory.length} products`}>
             <div className="inventory-stack">
+              {!inventory.length ? (
+                <div className="note-box">
+                  <strong>Post your first real product</strong>
+                  <p>
+                    Your seller account is live. Use the product manager below to upload real images,
+                    set pricing, and publish your first listing to the marketplace.
+                  </p>
+                </div>
+              ) : null}
               {inventory.map((product) => (
                 <article key={product.id} className="inventory-row">
                   <div className="inventory-meta">

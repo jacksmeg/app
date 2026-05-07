@@ -59,7 +59,7 @@ function App() {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 
-  if (state.backendConfigured && !isAuthenticatedLive) {
+  if (state.backendConfigured && (!isAuthenticatedLive || state.pendingPasswordRecovery)) {
     return <AuthScreen />;
   }
 
@@ -90,7 +90,11 @@ function App() {
           ) : null}
           {state.profile ? (
             <button className="profile-trigger" onClick={() => actions.openProfile()}>
-              <span className="profile-trigger-avatar">{profileInitials || "J"}</span>
+              {state.profile.avatarUrl ? (
+                <img src={state.profile.avatarUrl} alt={state.profile.name} className="profile-trigger-avatar-image" />
+              ) : (
+                <span className="profile-trigger-avatar">{profileInitials || "J"}</span>
+              )}
               <span className="profile-trigger-copy">
                 <strong>{state.profile.name}</strong>
                 <small>{state.profile.role === "seller" ? "Seller profile" : state.profile.role === "admin" ? "Admin profile" : "Buyer profile"}</small>
@@ -104,7 +108,16 @@ function App() {
           ) : (
             <span className="top-link top-link-static">Demo mode</span>
           )}
-          <button className="button-primary topbar-cta">
+          <button
+            className="button-primary topbar-cta"
+            onClick={() => {
+              if (state.profile?.role === "seller" || state.profile?.role === "admin") {
+                startTransition(() => actions.setView("seller"));
+                return;
+              }
+              actions.openProfile();
+            }}
+          >
             {isBuyer ? "Sell" : "Live status"}
           </button>
         </div>

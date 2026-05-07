@@ -81,6 +81,7 @@ export const normalizeUser = (row: any): User => ({
   verified: Boolean(row.verified),
   banned: Boolean(row.banned),
   avatarUrl: row.avatar_url ?? undefined,
+  avatarPath: row.avatar_path ?? undefined,
 });
 
 export const normalizeSeller = (row: any): Seller => {
@@ -89,8 +90,10 @@ export const normalizeSeller = (row: any): Seller => {
     id: row.id,
     name: profile.full_name ?? "Seller",
     shopName: row.shop_name ?? "JHIMS Shop",
+    bio: row.bio ?? undefined,
     location: profile.location ?? "Accra",
     verified: Boolean(profile.verified),
+    verificationStatus: row.verification_status ?? (profile.verified ? "Approved" : "Not Started"),
     rating: Number(row.rating ?? 0),
     reviews: Number(row.review_count ?? 0),
     balance: Number(row.balance ?? 0),
@@ -101,6 +104,12 @@ export const normalizeSeller = (row: any): Seller => {
     pendingWithdrawal: Number(row.pending_withdrawal ?? 0),
     payoutEnabled: Boolean(row.payout_enabled),
     stripeConnected: Boolean(row.stripe_onboarding_complete),
+    onboardingCompleted: Boolean(row.onboarding_completed),
+    onboardingSubmittedAt: row.onboarding_submitted_at ? formatDateOnly(row.onboarding_submitted_at) : undefined,
+    payoutPhone: row.payout_phone ?? undefined,
+    idDocumentType: row.id_document_type ?? undefined,
+    idDocumentNumber: row.id_document_number ?? undefined,
+    idDocumentPath: row.id_document_path ?? undefined,
   };
 };
 
